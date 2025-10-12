@@ -8,19 +8,7 @@ import os
 
 def visualize_detections_on_image(image_path, ground_truth_json_path, detections_json_path=None, 
                                 show_labels=True, gt_opacity=0.3, det_opacity=0.5):
-    """
-    Visualize both ground truth annotations and detections on the same image
-    
-    Args:
-        image_path: Path to the GeoTIFF image
-        ground_truth_json_path: Path to ground truth GeoJSON file
-        detections_json_path: Path to detections JSON file (optional)
-        show_labels: Whether to show class labels
-        gt_opacity: Opacity for ground truth overlays
-        det_opacity: Opacity for detection bounding boxes
-    """
-    
-    # Load image (assumes RGB or grayscale GeoTIFF)
+
     with rasterio.open(image_path) as src:
         r, g, b = src.read(3), src.read(2), src.read(1)
         print(f"Image shape: {r.shape}")
@@ -28,7 +16,7 @@ def visualize_detections_on_image(image_path, ground_truth_json_path, detections
         print(f"Stacked image shape: {img.shape}")
         
         if img.shape[2] == 1:
-            img = np.repeat(img, 3, axis=2)  # grayscale to RGB
+            img = np.repeat(img, 3, axis=2)  
         
         img = cv2.normalize(img.astype(np.float32), None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
     
@@ -47,7 +35,6 @@ def visualize_detections_on_image(image_path, ground_truth_json_path, detections
         'false_pos': (255, 0, 255)   
     }
     
-    # Draw ground truth annotations
     if os.path.exists(ground_truth_json_path):
         with open(ground_truth_json_path, 'r') as f:
             gt_data = json.load(f)
@@ -65,11 +52,9 @@ def visualize_detections_on_image(image_path, ground_truth_json_path, detections
                     pts = np.array(ring, np.int32)
                     pts = pts.reshape((-1, 1, 2))
                     
-                    # Draw filled polygon for ground truth
                     cv2.fillPoly(gt_overlay, [pts], color=color)
                     cv2.polylines(gt_overlay, [pts], isClosed=True, color=color, thickness=3)
                     
-                    # Put GT label
                     if show_labels and len(pts) > 0:
                         text_pos = tuple(pts[0][0])
                         cv2.putText(gt_overlay, f"GT: {class_name}", text_pos, 
@@ -107,11 +92,9 @@ def visualize_detections_on_image(image_path, ground_truth_json_path, detections
                 label = f"PRED: {class_name} ({confidence:.2f})"
                 label_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)[0]
                 
-                # Draw label background
                 cv2.rectangle(det_overlay, (x_min, y_min - label_size[1] - 10), 
                             (x_min + label_size[0] + 10, y_min), color, -1)
                 
-                # Draw label text
                 cv2.putText(det_overlay, label, (x_min + 5, y_min - 5), 
                           cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, 
                           color=(255, 255, 255), thickness=1, lineType=cv2.LINE_AA)
@@ -137,9 +120,6 @@ def visualize_detections_on_image(image_path, ground_truth_json_path, detections
         if conf_type == 'false_pos':
             continue
         cv2.rectangle(legend, (10, y_offset), (30, y_offset + 20), color, 2)
-        label_map = {'high_conf': 'High Conf (>0.7)', 'medium_conf': 'Med Conf (0.4-0.7)', 'low_conf': 'Low Conf (<0.4)'}
-        cv2.putText(legend, f"Prediction: {label_map.get(conf_type, conf_type)}", (40, y_offset + 15), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
         y_offset += 30
     
     legend_y = blended.shape[0] - legend_height - 10
@@ -149,7 +129,6 @@ def visualize_detections_on_image(image_path, ground_truth_json_path, detections
     plt.figure(figsize=(20, 16))
     plt.imshow(cv2.cvtColor(blended, cv2.COLOR_BGR2RGB))
     
-    # Create title with statistics
     title_parts = ["Ground Truth (Green) vs Detections (Colored Boxes)"]
     if detections_json_path and os.path.exists(detections_json_path):
         with open(detections_json_path, 'r') as f:
@@ -201,8 +180,8 @@ def main():
         tiff_dir="PS03_1/Datasets/sample-set/Brick Kiln",
         detections_dir='PS03_1/Datasets/sample-set/Brick Kiln',  
         show_labels=True,
-        gt_opacity=0.8,  # Ground truth transparency
-        det_opacity=0.6  # Detection box transparency
+        gt_opacity=0.8,  
+        det_opacity=0.6  
     )
 
 if __name__ == "__main__":
